@@ -76,3 +76,9 @@ The output summary will be saved in a markdown file in the specified output dire
 ## Output
 
 The summarized content is saved as a markdown file named `summary.md` in the current working directory. This file includes the transcribed text and its corresponding summary.
+
+## Sources
+
+- [YouTube Video Summarizer with OpenAI Whisper and GPT](https://github.com/mirabdullahyaser/Summarizing-Youtube-Videos-with-OpenAI-Whisper-and-GPT-3/tree/master)
+- [Mistral Python Client](https://github.com/mistralai/client-python)
+- [Ollama : Installez LLama 2 et Code LLama en quelques secondes !](https://www.geeek.org/tutoriel-installation-llama-2-et-code-llama/)
