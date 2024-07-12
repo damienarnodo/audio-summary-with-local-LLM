@@ -12,6 +12,7 @@ This tool is designed to provide a quick and concise summary of audio and video 
 - **Local File Support**: Summarize audio files available on your local disk.
 - **Transcription**: Converts audio content to text using Whisper.
 - **Summarization**: Generates a concise summary using Mistral AI (Ollama).
+- **Transcript Only Option**: Option to only transcribe the audio content without generating a summary.
 
 ## Prerequisites
 
@@ -19,7 +20,7 @@ Before you start using this tool, you need to install the following dependencies
 
 - Python 3.8 or higher
 - `pytube` for downloading videos from YouTube.
-- `pathlib`for local file
+- `pathlib` for local file handling
 - `openai-whisper` for audio transcription.
 - [Ollama](https://ollama.com) for LLM model management.
 - `ffmpeg` (required for whisper)
@@ -36,17 +37,16 @@ cd audio-summary-with-local-LLM
 pip install -r src/requirements.txt
 ```
 
-### LLM Requierement
+### LLM Requirement
 
-[Download and install](https://ollama.com) Ollama to carry out LLM Management
-More details about LLM model supported can be discribe on the Ollama [github](https://github.com/ollama/ollama).
+[Download and install](https://ollama.com) Ollama to carry out LLM Management. More details about LLM models supported can be found on the Ollama [GitHub](https://github.com/ollama/ollama).
 
-Download and use Mistral model :
+Download and use the Mistral model:
 
 ```bash
 ollama pull mistral
 
-## Test the access :
+## Test the access:
 ollama run mistral "tell me a joke"
 ```
 
@@ -56,6 +56,7 @@ The tool can be executed with the following command line options:
 
 - `--from-youtube`: To download and summarize a video from YouTube.
 - `--from-local`: To load and summarize an audio or video file from the local disk.
+- `--transcript-only`: To only transcribe the audio content without generating a summary. This option must be used with either `--from-youtube` or `--from-local`.
 
 ### Examples
 
@@ -71,11 +72,23 @@ The tool can be executed with the following command line options:
    python src/summary.py --from-local <path-to-audio-file>
    ```
 
-The output summary will be saved in a markdown file in the specified output directory.
+3. **Transcribing a YouTube video without summarizing:**
+
+   ```bash
+   python src/summary.py --from-youtube <YouTube-Video-URL> --transcript-only
+   ```
+
+4. **Transcribing a local audio file without summarizing:**
+
+   ```bash
+   python src/summary.py --from-local <path-to-audio-file> --transcript-only
+   ```
+
+The output summary will be saved in a markdown file in the specified output directory, while the transcript will be saved in the temporary directory.
 
 ## Output
 
-The summarized content is saved as a markdown file named `summary.md` in the current working directory. This file includes the transcribed text and its corresponding summary.
+The summarized content is saved as a markdown file named `summary.md` in the current working directory. This file includes the transcribed text and its corresponding summary. If `--transcript-only` is used, only the transcription will be saved in the temporary directory.
 
 ## Sources
 

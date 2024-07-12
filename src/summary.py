@@ -3,10 +3,10 @@ import ollama
 import argparse
 from pytube import YouTube
 from pathlib import Path
-
+import os
 
 WHISPER_MODEL = "base"
-OLLAMA_MODEL = "mistral"
+OLLAMA_MODEL = "llama3"
 
 # Function to download a video from YouTube
 def download_from_youtube(url: str, path: str):
@@ -65,11 +65,16 @@ def main():
     group.add_argument("--from-youtube", type=str, help="YouTube URL to download.")
     group.add_argument("--from-local", type=str, help="Path to the local audio file.")
     parser.add_argument("--output", type=str, default="./summary.md", help="Output markdown file path.")
+    parser.add_argument("--transcript-only", action='store_true', help="Only transcribe the file, do not summarize.")
     
     args = parser.parse_args()
     
     # Set up data directory
     data_directory = Path("tmp")
+    # Check if the directory exists, if not, create it
+    if not data_directory.exists():
+        data_directory.mkdir(parents=True)
+        print(f"Created directory: {data_directory}")
   
     if args.from_youtube:
         # Download from YouTube
@@ -78,11 +83,15 @@ def main():
         file_path = data_directory / "to_transcribe.mp4"
     elif args.from_local:
         # Use local file
-        file_path = args.from_local
+        file_path = Path(args.from_local)
     
     print(f"Transcribing file: {file_path}")
     # Transcribe the audio file
     transcript = transcribe_file(str(file_path), data_directory / "transcript.txt")
+    
+    if args.transcript_only:
+        print("Transcription complete. Skipping summary generation.")
+        return
     
     print("Generating summary...")
     # Generate summary
