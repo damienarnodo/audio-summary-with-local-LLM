@@ -95,3 +95,12 @@ The summarized content is saved as a markdown file named `summary.md` in the cur
 - [YouTube Video Summarizer with OpenAI Whisper and GPT](https://github.com/mirabdullahyaser/Summarizing-Youtube-Videos-with-OpenAI-Whisper-and-GPT-3/tree/master)
 - [Mistral Python Client](https://github.com/mistralai/client-python)
 - [Ollama : Installez LLama 2 et Code LLama en quelques secondes !](https://www.geeek.org/tutoriel-installation-llama-2-et-code-llama/)
+
+## Known Issues
+
+```python
+ValueError: Soundfile is either not in the correct format or is malformed. Ensure that the soundfile has a valid audio file extension (e.g. wav, flac or mp3) and is not corrupted. If reading from a remote URL, ensure that the URL is the full address to **download** the audio file.
+```
+
+To fix it :
+`ffmpeg -i my_file.mp4 -movflags faststart my_file_fixed.mp4`

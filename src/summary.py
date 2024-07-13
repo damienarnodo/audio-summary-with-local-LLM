@@ -1,11 +1,10 @@
-import whisper
 import ollama
 import argparse
+import os
 from pytube import YouTube
 from pathlib import Path
-import os
+from transformers import pipeline
 
-WHISPER_MODEL = "base"
 OLLAMA_MODEL = "llama3"
 
 # Function to download a video from YouTube
@@ -16,16 +15,19 @@ def download_from_youtube(url: str, path: str):
     # Download the video to the specified path
     stream.download(Path(path), filename="to_transcribe.mp4")
 
-# Function to transcribe an audio file using the Whisper model
+# Function to transcribe an audio file using the transformers pipeline
 def transcribe_file(file_path: str, output_file: str) -> str:
-    # Load the Whisper model
-    model = whisper.load_model(WHISPER_MODEL)
+    # Load the pipeline model for automatic speech recognition with MPS
+    transcriber_gpu = pipeline("automatic-speech-recognition", model="openai/whisper-large-v3", device="mps")
+    
     # Transcribe the audio file
-    transcribe = model.transcribe(file_path)
+    transcribe = transcriber_gpu(file_path)
+    
     # Save the transcribed text to the specified temporary file
     with open(output_file, 'w') as tmp_file:
         tmp_file.write(transcribe["text"])
         print(f"Transcription saved to file: {output_file}")
+    
     # Return the transcribed text
     return transcribe["text"]
 
