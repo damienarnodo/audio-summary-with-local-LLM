@@ -1,5 +1,4 @@
 openai-whisper==20231117
-pytube==15.0.0
 ollama==0.1.8
 torch==2.5.0.dev20240712
 torchaudio==2.4.0.dev20240712

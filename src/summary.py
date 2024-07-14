@@ -1,24 +1,29 @@
 import ollama
 import argparse
-import os
-from pytube import YouTube
 from pathlib import Path
 from transformers import pipeline
+import yt_dlp
 
 OLLAMA_MODEL = "llama3"
 
-# Function to download a video from YouTube
+# Function to download a video from YouTube using yt-dlp
 def download_from_youtube(url: str, path: str):
-    yt = YouTube(url)
-    # Filter streams to get the highest resolution progressive mp4 stream
-    stream = yt.streams.filter(file_extension="mp4", only_audio=True).first()
-    # Download the video to the specified path
-    stream.download(Path(path), filename="to_transcribe.mp4")
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': str(Path(path) / 'to_transcribe.%(ext)s'),
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
 
 # Function to transcribe an audio file using the transformers pipeline
 def transcribe_file(file_path: str, output_file: str) -> str:
     # Load the pipeline model for automatic speech recognition with MPS
-    transcriber_gpu = pipeline("automatic-speech-recognition", model="openai/whisper-large-v3", device="mps")
+    transcriber_gpu = pipeline("automatic-speech-recognition", model="openai/whisper-large-v2", device="mps")
     
     # Transcribe the audio file
     transcribe = transcriber_gpu(file_path)
@@ -82,7 +87,7 @@ def main():
         # Download from YouTube
         print(f"Downloading YouTube video from {args.from_youtube}")
         download_from_youtube(args.from_youtube, str(data_directory))
-        file_path = data_directory / "to_transcribe.mp4"
+        file_path = data_directory / "to_transcribe.mp3"
     elif args.from_local:
         # Use local file
         file_path = Path(args.from_local)
