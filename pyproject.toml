@@ -18,8 +18,14 @@ dependencies = [
     "transformers>=4.50.2",
     "yt-dlp>=2025.3.27",
 ]
+[project.scripts]
+audio-summary = "summary:main"
+
 [tool.setuptools]
-py-modules = []
+py-modules = ["summary"]
+
+[tool.setuptools.package-dir]
+"" = "src"
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.

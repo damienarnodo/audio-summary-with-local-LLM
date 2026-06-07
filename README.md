@@ -48,9 +48,30 @@ Download and use the Llama3 model:
 ```bash
 ollama pull llama3
 
-## Test the access:
+# Test the access:
 ollama run llama3 "tell me a joke"
 ```
+
+## Usage with uvx (no installation required)
+
+You can run this tool directly without cloning the repository using `uvx`:
+
+```bash
+# Summarize a YouTube video
+uvx --from git+https://github.com/damienarnodo/audio-summary-with-local-LLM.git audio-summary --from-youtube <YouTube-Video-URL>
+
+# Summarize a local audio file
+uvx --from git+https://github.com/damienarnodo/audio-summary-with-local-LLM.git audio-summary --from-local <path-to-audio-file>
+
+# Transcribe only (no summary)
+uvx --from git+https://github.com/damienarnodo/audio-summary-with-local-LLM.git audio-summary --from-youtube <YouTube-Video-URL> --transcript-only
+
+# Specify language and output file
+uvx --from git+https://github.com/damienarnodo/audio-summary-with-local-LLM.git audio-summary --from-local <path-to-audio-file> --language fr --output my_summary.md
+```
+
+> [!NOTE]
+> `uvx` automatically creates a temporary virtual environment and installs all dependencies. On first run, this may take a moment. Ensure `ffmpeg` and [Ollama](https://ollama.com) are installed and running on your system.
 
 ## Usage
 
