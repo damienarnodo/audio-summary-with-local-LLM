@@ -1,6 +1,10 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "audio-summary-with-local-LLM"
-dynamic = ["version"]
+version = "0.1.0"
 description = 'Sum up your local or remote files with a local LLM'
 keywords = ["audio", "summary", "local-llm", "ollama", "whisper"]
 readme = "README.md"

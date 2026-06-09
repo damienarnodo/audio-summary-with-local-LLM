@@ -1,5 +1,6 @@
-audio_summary_with_local_LLM.egg-info/
+src/__pycache__
 .ruff_cache/
+src/audio_summary_with_local_LLM.egg-info/
 # Virtual Env
 .venv
 
