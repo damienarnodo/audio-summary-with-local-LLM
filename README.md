@@ -27,7 +27,7 @@ before any work begins.
 | 24 GB   | `Voxtral-Mini-4B-Realtime-2602-fp16`       | `Qwen3-8B-8bit`           |
 | 32 GB+  | `Voxtral-Mini-4B-Realtime-2602-fp16`       | `Qwen3-30B-A3B-4bit` (MoE)|
 
-The selection table lives in [`src/audio_summary/config.py`](src/audio_summary/config.py)
+The selection table lives in [`src/audio_summary/models/config.py`](src/audio_summary/models/config.py)
 and can be edited without touching the core logic. The highest tier whose RAM requirement
 fits the detected memory is selected.
 
@@ -87,6 +87,23 @@ uvx --from git+https://github.com/damienarnodo/audio-summary-with-local-LLM.git 
 uvx --from git+https://github.com/damienarnodo/audio-summary-with-local-LLM.git audio-summary --from-local <path-to-audio-file> --language fr --output my_summary.md
 ```
 
+### Shell alias (optional)
+
+To avoid typing the full `uvx --from ...` command every time, add an alias to your
+`~/.zshrc`:
+
+```bash
+# Aliases
+alias audio-summary="uvx --from git+https://github.com/damienarnodo/audio-summary-with-local-LLM.git audio-summary"
+```
+
+Reload your shell (`source ~/.zshrc`) and you can then call it directly:
+
+```bash
+audio-summary --from-youtube <YouTube-Video-URL>
+audio-summary --from-local <path-to-audio-file> --language fr --output my_summary.md
+```
+
 ## Usage
 
 The CLI options are:
@@ -125,20 +142,21 @@ directory, with a title and concise summary. The transcript is saved to
 
 ## Project structure
 
-The code is split into focused modules under `src/audio_summary/`:
+The code is organized into focused subpackages under `src/audio_summary/`:
 
-| Module             | Responsibility                                            |
-|--------------------|-----------------------------------------------------------|
-| `config.py`        | Model selection table (RAM tiers → STT/summarization).    |
-| `device.py`        | Unified-memory detection and tier selection (`psutil`).   |
-| `download.py`      | YouTube audio download (`yt-dlp` + `ffmpeg`).             |
-| `transcription.py` | Speech-to-Text (Voxtral via `mlx-audio`, Whisper fallback).|
-| `summarization.py` | Summarization with Qwen3 via `mlx-lm`.                    |
-| `cli.py`           | Argument parsing and orchestration (entrypoint).          |
+| Module                       | Responsibility                                            |
+|------------------------------|-----------------------------------------------------------|
+| `models/config.py`           | Model selection table (RAM tiers → STT/summarization).    |
+| `models/device.py`           | Unified-memory detection and tier selection (`psutil`).   |
+| `pipeline/download.py`       | YouTube audio download (`yt-dlp` + `ffmpeg`).             |
+| `pipeline/transcription.py`  | Speech-to-Text (Voxtral via `mlx-audio`, Whisper fallback).|
+| `pipeline/summarization.py`  | Summarization with Qwen3 via `mlx-lm`.                    |
+| `utils/helpers.py`           | Shared I/O, CLI argument, and console-output helpers.     |
+| `cli.py`                     | Argument parsing and orchestration (entrypoint).          |
 
 ## Customizing the models
 
-Edit the `TIERS` table in [`src/audio_summary/config.py`](src/audio_summary/config.py).
+Edit the `TIERS` table in [`src/audio_summary/models/config.py`](src/audio_summary/models/config.py).
 Each tier declares a minimum RAM threshold, an STT model (engine + Hugging Face repo),
 and a summarization repo. For example, to use a different Qwen3 size or a different
 Voxtral quantization, just change the relevant repo string — no other code changes needed.
