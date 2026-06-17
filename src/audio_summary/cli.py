@@ -2,29 +2,23 @@
 
 Download (optional), transcribe, and summarize audio/video files fully on
 Apple Silicon via MLX. Models are selected automatically from the detected
-unified memory (see ``config`` and ``device``).
+unified memory (see ``models.config`` and ``models.device``).
 """
 
 import argparse
 from pathlib import Path
 
-from .device import select_models
-from .download import download_from_youtube
-from .summarization import summarize_text
-from .transcription import transcribe_file
-
-DEFAULT_LANGUAGE = "en"  # Use "auto" on the CLI for automatic detection.
-
-
-def _resolve_language(arg_language: str | None) -> str | None:
-    """Map the CLI ``--language`` value to a code or ``None`` (auto-detect)."""
-    language = arg_language if arg_language else DEFAULT_LANGUAGE
-    if language and language.lower() == "auto":
-        return None
-    return language
+from .models import select_models
+from .pipeline import download_from_youtube, summarize_text, transcribe_file
+from .utils import (
+    ensure_directory,
+    print_model_banner,
+    resolve_language,
+    write_summary,
+)
 
 
-def main() -> None:
+def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Download, transcribe, and summarize audio or video files "
         "on Apple Silicon (MLX)."
@@ -49,24 +43,19 @@ def main() -> None:
         help="Language code for transcription (e.g. 'en', 'fr', 'es', "
         "or 'auto' for detection).",
     )
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    language = _resolve_language(args.language)
+
+def main() -> None:
+    args = _parse_args()
+    language = resolve_language(args.language)
 
     # --- Automatic model selection based on detected unified memory ---
     ram_gb, tier = select_models()
-    print("=" * 60)
-    print(f"Detected unified memory : {ram_gb:.1f} GB")
-    print(f"Selected hardware tier  : >= {tier.min_ram_gb} GB")
-    print(f"STT model               : {tier.stt.repo} ({tier.stt.engine})")
-    print(f"Summarization model     : {tier.summarization_repo}")
-    print("=" * 60)
+    print_model_banner(ram_gb, tier)
 
     # --- Working directory for intermediate files ---
-    data_directory = Path("tmp")
-    if not data_directory.exists():
-        data_directory.mkdir(parents=True)
-        print(f"Created directory: {data_directory}")
+    data_directory = ensure_directory("tmp")
 
     # --- Resolve input file ---
     if args.from_youtube:
@@ -91,11 +80,7 @@ def main() -> None:
     # --- Summarization ---
     print("Generating summary...")
     summary = summarize_text(transcript, tier.summarization_repo)
-
-    with open(args.output, "w") as md_file:
-        md_file.write("# Summary\n\n")
-        md_file.write(summary)
-    print(f"Summary written to {args.output}")
+    write_summary(args.output, summary)
 
 
 if __name__ == "__main__":

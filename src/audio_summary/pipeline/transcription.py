@@ -7,7 +7,7 @@ Two engines are supported, selected through ``config.STTModel.engine``:
 * ``whisper`` -> ``mlx-whisper`` fallback for memory-constrained Macs.
 """
 
-from .config import STTModel
+from ..models import STTModel
 
 
 def _transcribe_voxtral(file_path: str, model_repo: str, language: str | None) -> str:
