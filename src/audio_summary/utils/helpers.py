@@ -39,8 +39,11 @@ def print_model_banner(ram_gb: float, tier: Tier) -> None:
 
 
 def write_summary(output_path: str | Path, summary: str) -> None:
-    """Write ``summary`` to ``output_path`` as a titled markdown document."""
+    """Write ``summary`` to ``output_path``.
+
+    The summarization prompt already makes the model emit its own ``#`` title and
+    Markdown structure, so the text is written verbatim.
+    """
     with open(output_path, "w") as md_file:
-        md_file.write("# Summary\n\n")
         md_file.write(summary)
     print(f"Summary written to {output_path}")
