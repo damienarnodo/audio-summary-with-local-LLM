@@ -1,60 +1,77 @@
-# Audio Summary with Local LLM
+# Audio Summary with Local LLM (Apple Silicon / MLX)
 
-This tool is designed to provide a quick and concise summary of audio and video files. It supports summarizing content either from a local file or directly from YouTube. The tool uses Whisper for transcription and a local version of Llama3 (via Ollama) for generating summaries.
+This tool provides a quick and concise summary of audio and video files. It supports
+summarizing content either from a local file or directly from YouTube. Everything runs
+**fully on Apple Silicon** through Apple's [MLX](https://github.com/ml-explore/mlx)
+framework — no NVIDIA/CUDA, no PyTorch CUDA stack, no external server required.
 
-> [!TIP]  
-> It is possible to change the model you wish to use.
-> To do this, change the `OLLAMA_MODEL` variable, and download the associated model via [ollama](https://github.com/ollama/ollama)
+- **Speech-to-Text**: Mistral [Voxtral](https://huggingface.co/mistralai) via
+  [`mlx-audio`](https://github.com/Blaizzy/mlx-audio) (with an
+  [`mlx-whisper`](https://github.com/ml-explore/mlx-examples) fallback for
+  memory-constrained Macs). Voxtral outperforms Whisper large-v3 on most transcription
+  benchmarks and natively handles long audio with streaming.
+- **Summarization**: [Qwen3](https://huggingface.co/Qwen) via
+  [`mlx-lm`](https://github.com/ml-explore/mlx-lm) — the recommended family for
+  summarization on Apple Silicon.
+
+## Automatic model selection
+
+At startup the tool detects the machine's **unified memory** and automatically selects
+the best models for the available RAM. The detected memory and chosen models are printed
+before any work begins.
+
+| RAM     | STT model                                  | Summarization model       |
+|---------|--------------------------------------------|---------------------------|
+| 8 GB    | `whisper-large-v3-turbo` (mlx-whisper)     | `Qwen3-4B-4bit`           |
+| 16 GB   | `Voxtral-Mini-4B-Realtime-2602-4bit`       | `Qwen3-8B-4bit`           |
+| 24 GB   | `Voxtral-Mini-4B-Realtime-2602-fp16`       | `Qwen3-8B-8bit`           |
+| 32 GB+  | `Voxtral-Mini-4B-Realtime-2602-fp16`       | `Qwen3-30B-A3B-4bit` (MoE)|
+
+The selection table lives in [`src/audio_summary/models/config.py`](src/audio_summary/models/config.py)
+and can be edited without touching the core logic. The highest tier whose RAM requirement
+fits the detected memory is selected.
+
+> [!NOTE]
+> Models are downloaded from the Hugging Face Hub on first use and cached locally
+> (`~/.cache/huggingface`). The first run for a given model may take a while.
 
 ## Features
 
 - **YouTube Integration**: Download and summarize content directly from YouTube.
 - **Local File Support**: Summarize audio/video files available on your local disk.
-- **Transcription**: Converts audio content to text using Whisper.
-- **Summarization**: Generates a concise summary using Llama3 (Ollama).
-- **Transcript Only Option**: Option to only transcribe the audio content without generating a summary.
-- **Device Optimization**: Automatically uses the best available hardware (MPS for Mac, CUDA for NVIDIA GPUs, or CPU).
+- **Transcription**: Converts audio to text with Voxtral (or Whisper fallback).
+- **Summarization**: Generates a concise summary with Qwen3.
+- **Transcript Only Option**: Only transcribe, without generating a summary.
+- **Automatic model selection**: Picks the best models for your Mac's unified memory.
 
 ## Prerequisites
 
-Before you start using this tool, you need to install the following dependencies:
-
-- Python 3.12 and lower than 3.13
-- [Ollama](https://ollama.com) for LLM model management
-- `ffmpeg` (required for audio processing)
+- An Apple Silicon Mac (M1 or newer)
+- Python 3.12 (and lower than 3.13)
+- `ffmpeg` (required for audio extraction/processing)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) for package management
+
+Install `ffmpeg` with [Homebrew](https://brew.sh):
+
+```bash
+brew install ffmpeg
+```
 
 ## Installation
 
-### Using uv
-
-Clone the repository and install the required Python packages using [uv](https://github.com/astral-sh/uv):
+Clone the repository and install dependencies with [uv](https://github.com/astral-sh/uv):
 
 ```bash
 git clone https://github.com/damienarnodo/audio-summary-with-local-LLM.git
 cd audio-summary-with-local-LLM
 
-# Create and activate a virtual environment with uv
 uv sync
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
-
-### LLM Requirement
-
-[Download and install](https://ollama.com) Ollama to carry out LLM Management. More details about LLM models supported can be found on the Ollama [GitHub](https://github.com/ollama/ollama).
-
-Download and use the Llama3 model:
-
-```bash
-ollama pull llama3
-
-# Test the access:
-ollama run llama3 "tell me a joke"
+source .venv/bin/activate  # activate the virtual environment
 ```
 
 ## Usage with uvx (no installation required)
 
-You can run this tool directly without cloning the repository using `uvx`:
+You can run the tool directly without cloning the repository using `uvx`:
 
 ```bash
 # Summarize a YouTube video
@@ -70,172 +87,102 @@ uvx --from git+https://github.com/damienarnodo/audio-summary-with-local-LLM.git 
 uvx --from git+https://github.com/damienarnodo/audio-summary-with-local-LLM.git audio-summary --from-local <path-to-audio-file> --language fr --output my_summary.md
 ```
 
-> [!NOTE]
-> `uvx` automatically creates a temporary virtual environment and installs all dependencies. On first run, this may take a moment. Ensure `ffmpeg` and [Ollama](https://ollama.com) are installed and running on your system.
+### Shell alias (optional)
+
+To avoid typing the full `uvx --from ...` command every time, add an alias to your
+`~/.zshrc`:
+
+```bash
+# Aliases
+alias audio-summary="uvx --from git+https://github.com/damienarnodo/audio-summary-with-local-LLM.git audio-summary"
+```
+
+Reload your shell (`source ~/.zshrc`) and you can then call it directly:
+
+```bash
+audio-summary --from-youtube <YouTube-Video-URL>
+audio-summary --from-local <path-to-audio-file> --language fr --output my_summary.md
+```
 
 ## Usage
 
-The tool can be executed with the following command line options:
+The CLI options are:
 
-- `--from-youtube`: To download and summarize a video from YouTube.
-- `--from-local`: To load and summarize an audio or video file from the local disk.
-- `--output`: Specify the output file path (default: ./summary.md)
-- `--transcript-only`: To only transcribe the audio content without generating a summary.
-- `--language`: Select the language to be used for the transcription (default: en)
+- `--from-youtube`: Download and summarize a video from YouTube.
+- `--from-local`: Load and summarize a local audio or video file.
+- `--output`: Output markdown file path (default: `./summary.md`).
+- `--transcript-only`: Only transcribe, do not summarize.
+- `--language`: Language code for transcription (e.g. `en`, `fr`, `es`, or `auto` for
+  automatic detection). Default: `en`.
 
 ### Examples
 
-1. **Summarizing a YouTube video:**
+```bash
+# Summarize a YouTube video
+audio-summary --from-youtube <YouTube-Video-URL>
 
-   ```bash
-   uv run python src/summary.py --from-youtube <YouTube-Video-URL>
-   ```
+# Summarize a local audio file
+audio-summary --from-local <path-to-audio-file>
 
-2. **Summarizing a local audio file:**
+# Transcribe only (no summary)
+audio-summary --from-youtube <YouTube-Video-URL> --transcript-only
 
-   ```bash
-   uv run python src/summary.py --from-local <path-to-audio-file>
-   ```
+# Custom language and output file
+audio-summary --from-local <path-to-audio-file> --language fr --output my_summary.md
+```
 
-3. **Transcribing a YouTube video without summarizing:**
-
-   ```bash
-   uv run python src/summary.py --from-youtube <YouTube-Video-URL> --transcript-only
-   ```
-
-4. **Transcribing a local audio file without summarizing:**
-
-   ```bash
-   uv run python src/summary.py --from-local <path-to-audio-file> --transcript-only
-   ```
-
-5. **Specifying a custom output file:**
-
-   ```bash
-   uv run python src/summary.py --from-youtube <YouTube-Video-URL> --output my_summary.md
-   ```
-
-The output summary will be saved in a markdown file in the specified output directory, while the transcript will be saved in the temporary directory.
+When running from a clone you can also use `uv run audio-summary ...` or
+`uv run python -m audio_summary.cli ...`.
 
 ## Output
 
-The summarized content is saved as a markdown file (default: `summary.md`) in the current working directory. This file includes a title and a concise summary of the content. The transcript is saved in the `tmp/transcript.txt` file.
+The summary is written to a markdown file (default: `summary.md`) in the current working
+directory, with a title and concise summary. The transcript is saved to
+`tmp/transcript.txt`.
 
-## Hardware Acceleration
+## Project structure
 
-The tool automatically detects and uses the best available hardware:
+The code is organized into focused subpackages under `src/audio_summary/`:
 
-- MPS (Metal Performance Shaders) for Apple Silicon Macs
-- CUDA for NVIDIA GPUs
-- Falls back to CPU when neither is available
+| Module                       | Responsibility                                            |
+|------------------------------|-----------------------------------------------------------|
+| `models/config.py`           | Model selection table (RAM tiers → STT/summarization).    |
+| `models/device.py`           | Unified-memory detection and tier selection (`psutil`).   |
+| `pipeline/download.py`       | YouTube audio download (`yt-dlp` + `ffmpeg`).             |
+| `pipeline/transcription.py`  | Speech-to-Text (Voxtral via `mlx-audio`, Whisper fallback).|
+| `pipeline/summarization.py`  | Summarization with Qwen3 via `mlx-lm`.                    |
+| `utils/helpers.py`           | Shared I/O, CLI argument, and console-output helpers.     |
+| `cli.py`                     | Argument parsing and orchestration (entrypoint).          |
 
-### Handling Longer Audio Files
+## Customizing the models
 
-This tool can process audio files of any length. For files longer than 30 seconds, the script automatically:
-
-1. Chunks the audio into manageable segments
-2. Processes each chunk separately
-3. Combines the results into a single transcript
-
-## Sources
-
-- [YouTube Video Summarizer with OpenAI Whisper and GPT](https://github.com/mirabdullahyaser/Summarizing-Youtube-Videos-with-OpenAI-Whisper-and-GPT-3/tree/master)
-- [Ollama GitHub Repository](https://github.com/ollama/ollama)
-- [Transformers by Hugging Face](https://huggingface.co/docs/transformers/index)
-- [yt-dlp Documentation](https://github.com/yt-dlp/yt-dlp)
+Edit the `TIERS` table in [`src/audio_summary/models/config.py`](src/audio_summary/models/config.py).
+Each tier declares a minimum RAM threshold, an STT model (engine + Hugging Face repo),
+and a summarization repo. For example, to use a different Qwen3 size or a different
+Voxtral quantization, just change the relevant repo string — no other code changes needed.
 
 ## Troubleshooting
 
 ### ffmpeg not found
 
-If you encounter this error::
+If you encounter:
 
 ```bash
-yt_dlp.utils.DownloadError: ERROR: Postprocessing: ffprobe and ffmpeg not found. Please install or provide the path using --ffmpeg-location
+yt_dlp.utils.DownloadError: ERROR: Postprocessing: ffprobe and ffmpeg not found.
 ```
 
-Please refer to [this post](https://www.reddit.com/r/StacherIO/wiki/ffmpeg/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+Install ffmpeg with `brew install ffmpeg`.
 
-### Audio Format Issues
+### Out of memory
 
-If you encounter this error:
+If a model is too large for your machine, lower the relevant tier's model in
+`config.py` (e.g. switch a `fp16` STT model to its `4bit` variant, or pick a smaller
+Qwen3 size). The smallest tier uses the lightweight `mlx-whisper` engine.
 
-```bash
-ValueError: Soundfile is either not in the correct format or is malformed. Ensure that the soundfile has a valid audio file extension (e.g. wav, flac or mp3) and is not corrupted.
-```
+## Sources
 
-Try converting your file with ffmpeg:
-
-```bash
-ffmpeg -i my_file.mp4 -movflags faststart my_file_fixed.mp4
-```
-
-### Memory Issues on CPU
-
-If you're running on CPU and encounter memory issues during transcription, consider:
-
-1. Using a smaller Whisper model
-2. Processing shorter audio segments
-3. Ensuring you have sufficient RAM available
-
-### Slow Transcription
-
-Transcription can be slow on CPU. For best performance:
-
-1. Use a machine with GPU or Apple Silicon (MPS)
-2. Keep audio files under 10 minutes when possible
-3. Close other resource-intensive applications
-
-### Update the Whisper or LLM Model
-
-You can easily change the models used for transcription and summarization by modifying the variables at the top of the script:
-
-```python
-# Default models
-OLLAMA_MODEL = "llama3"
-WHISPER_MODEL = "openai/whisper-large-v2"
-```
-
-#### Changing the Whisper Model
-
-To use a different Whisper model for transcription:
-
-1. Update the `WHISPER_MODEL` variable with one of these options:
-   - `"openai/whisper-tiny"` (fastest, least accurate)
-   - `"openai/whisper-base"` (faster, less accurate)
-   - `"openai/whisper-small"` (balanced)
-   - `"openai/whisper-medium"` (slower, more accurate)
-   - `"openai/whisper-large-v2"` (slowest, most accurate)
-
-2. Example:
-
-   ```python
-   WHISPER_MODEL = "openai/whisper-medium"  # A good balance between speed and accuracy
-   ```
-
-For CPU-only systems, using a smaller model like `whisper-base` is recommended for better performance.
-
-#### Changing the LLM Model
-
-To use a different model for summarization:
-
-1. First, pull the desired model with Ollama:
-
-   ```bash
-   ollama pull mistral  # or any other supported model
-   ```
-
-2. Then update the `OLLAMA_MODEL` variable:
-
-   ```python
-   OLLAMA_MODEL = "mistral"  # or any other model you've pulled
-   ```
-
-3. Popular alternatives include:
-   - `"llama3"` (default)
-   - `"mistral"`
-   - `"llama2"`
-   - `"gemma:7b"`
-   - `"phi"`
-
-For a complete list of available models, visit the [Ollama model library](https://ollama.com/library).
+- [MLX](https://github.com/ml-explore/mlx) — Apple's array framework for Apple Silicon
+- [mlx-audio](https://github.com/Blaizzy/mlx-audio) — TTS/STT on MLX (Voxtral)
+- [mlx-lm](https://github.com/ml-explore/mlx-lm) — LLM inference on MLX (Qwen3)
+- [mlx-whisper](https://github.com/ml-explore/mlx-examples) — Whisper on MLX
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) — YouTube downloader
