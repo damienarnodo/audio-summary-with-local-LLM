@@ -9,12 +9,48 @@ Two engines are supported, selected through ``config.STTModel.engine``:
 * ``whisper`` -> ``mlx-whisper`` fallback for memory-constrained Macs.
 """
 
+import os
+import subprocess
+import tempfile
+
 from ..models import STTModel
 
 # Upper bound on generated tokens for a full-file transcription. The non-realtime
 # Voxtral ``generate`` defaults to only 128 tokens, which would truncate any real
 # recording, so we raise it well above the length of a long-form transcript.
 _VOXTRAL_MAX_TOKENS = 32768
+
+# Sample rate Voxtral expects; we resample to it during the WAV conversion below.
+_VOXTRAL_SAMPLE_RATE = 16000
+
+
+def _to_wav_16k_mono(src: str) -> str:
+    """Transcode ``src`` to a temporary 16 kHz mono WAV via ffmpeg.
+
+    Voxtral's processor loads audio through soundfile/libsndfile, which cannot
+    decode AAC/M4A (and several other compressed formats). ffmpeg (a project
+    prerequisite) handles those, so we normalize the input first. The caller is
+    responsible for deleting the returned path.
+    """
+    fd, wav_path = tempfile.mkstemp(suffix=".wav")
+    os.close(fd)
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-i",
+            src,
+            "-ac",
+            "1",
+            "-ar",
+            str(_VOXTRAL_SAMPLE_RATE),
+            wav_path,
+        ],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return wav_path
 
 
 def _transcribe_voxtral(file_path: str, model_repo: str, language: str | None) -> str:
@@ -28,7 +64,13 @@ def _transcribe_voxtral(file_path: str, model_repo: str, language: str | None) -
     kwargs: dict = {"max_tokens": _VOXTRAL_MAX_TOKENS}
     if language:
         kwargs["language"] = language
-    result = model.generate(file_path, **kwargs)
+
+    # Hand Voxtral a soundfile-readable WAV regardless of the source container.
+    wav_path = _to_wav_16k_mono(file_path)
+    try:
+        result = model.generate(wav_path, **kwargs)
+    finally:
+        os.remove(wav_path)
     return result.text.strip()
 
 
