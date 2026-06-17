@@ -2,12 +2,19 @@
 
 Two engines are supported, selected through ``config.STTModel.engine``:
 
-* ``voxtral`` -> Mistral Voxtral via ``mlx-audio``. Outperforms Whisper
-  large-v3 on most benchmarks and natively handles long audio with streaming.
+* ``voxtral`` -> Mistral Voxtral (non-realtime batch model) via ``mlx-audio``.
+  Outperforms Whisper large-v3 on most benchmarks. The *realtime* Voxtral
+  variant is deliberately not used here: it ignores the requested language and
+  truncates when run one-shot on a full file.
 * ``whisper`` -> ``mlx-whisper`` fallback for memory-constrained Macs.
 """
 
 from ..models import STTModel
+
+# Upper bound on generated tokens for a full-file transcription. The non-realtime
+# Voxtral ``generate`` defaults to only 128 tokens, which would truncate any real
+# recording, so we raise it well above the length of a long-form transcript.
+_VOXTRAL_MAX_TOKENS = 32768
 
 
 def _transcribe_voxtral(file_path: str, model_repo: str, language: str | None) -> str:
@@ -15,9 +22,10 @@ def _transcribe_voxtral(file_path: str, model_repo: str, language: str | None) -
     from mlx_audio.stt.utils import load
 
     model = load(model_repo)
-    # Voxtral handles long audio natively; ``generate`` returns an object with a
-    # ``.text`` attribute. ``language`` is optional (auto-detected when None).
-    kwargs: dict = {}
+    # The non-realtime Voxtral model transcribes the whole file in one pass and
+    # honors ``language``. ``generate`` returns an object with a ``.text``
+    # attribute. ``language`` is optional (auto-detected when None).
+    kwargs: dict = {"max_tokens": _VOXTRAL_MAX_TOKENS}
     if language:
         kwargs["language"] = language
     result = model.generate(file_path, **kwargs)

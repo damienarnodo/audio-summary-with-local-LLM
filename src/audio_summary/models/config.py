@@ -9,7 +9,8 @@ threshold is *less than or equal to* the detected memory is selected (see
 ``audio_summary.device.select_models``).
 
 STT engines:
-    * ``"voxtral"``  -> Mistral Voxtral via ``mlx-audio`` (streaming, long audio).
+    * ``"voxtral"``  -> Mistral Voxtral (non-realtime batch model) via ``mlx-audio``.
+      Honors the requested language and transcribes whole files in one pass.
     * ``"whisper"``  -> ``mlx-whisper`` (lightweight fallback for low-RAM Macs).
 """
 
@@ -42,17 +43,17 @@ TIERS: list[Tier] = [
     ),
     Tier(
         min_ram_gb=16,
-        stt=STTModel("voxtral", "mlx-community/Voxtral-Mini-4B-Realtime-2602-4bit"),
+        stt=STTModel("voxtral", "mlx-community/Voxtral-Mini-3B-2507-bf16"),
         summarization_repo="mlx-community/Qwen3-8B-4bit",
     ),
     Tier(
         min_ram_gb=24,
-        stt=STTModel("voxtral", "mlx-community/Voxtral-Mini-4B-Realtime-2602-fp16"),
+        stt=STTModel("voxtral", "mlx-community/Voxtral-Mini-3B-2507-bf16"),
         summarization_repo="mlx-community/Qwen3-8B-8bit",
     ),
     Tier(
         min_ram_gb=32,
-        stt=STTModel("voxtral", "mlx-community/Voxtral-Mini-4B-Realtime-2602-fp16"),
+        stt=STTModel("voxtral", "mlx-community/Voxtral-Mini-3B-2507-bf16"),
         summarization_repo="mlx-community/Qwen3-30B-A3B-4bit",
     ),
 ]
