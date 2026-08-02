@@ -82,7 +82,7 @@ requires-dist = [
     { name = "mlx-lm", specifier = ">=0.21.0" },
     { name = "mlx-whisper", specifier = ">=0.4.0" },
     { name = "psutil", specifier = ">=6.0.0" },
-    { name = "yt-dlp", specifier = ">=2025.3.27" },
+    { name = "yt-dlp", specifier = ">=2026.6.9" },
 ]
 
 [package.metadata.requires-dev]
@@ -1543,9 +1543,9 @@ wheels = [
 
 [[package]]
 name = "yt-dlp"
-version = "2025.3.27"
+version = "2026.6.9"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8c/cf/b944738d1508948e00b6d71b2305448ca4ea18fcc1c6ba0c2118270f2e82/yt_dlp-2025.3.27.tar.gz", hash = "sha256:30cb078f803b539b2a66521c5ec86d328c07f74aeca9440069e58619c299cf15", size = 2963084, upload-time = "2025-03-27T23:55:39.129Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/88/a4/1b0979d28f87774bb67fbbc66bce44f9dd1aa0e547a99e22985fac945c33/yt_dlp-2026.6.9.tar.gz", hash = "sha256:d50fcb95f48d61bedde33e408c1881d4c279e51c31354a599ce09e96ba0f4b86", size = 3030590, upload-time = "2026-06-09T23:27:14.831Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9d/8a/d4a533d5bb37e6459fbbf3f801a5f8bffafe78e364a9981ab571a7038db8/yt_dlp-2025.3.27-py3-none-any.whl", hash = "sha256:bef4105af0f25c13c1a505daf46142af45d9312dc2c3553651db083e6860e641", size = 3221898, upload-time = "2025-03-27T23:55:36.753Z" },
+    { url = "https://files.pythonhosted.org/packages/f3/ee/188a3dadf9dfdac713243521f919feca1cd091d4358c9ea7e8ebb710a7cc/yt_dlp-2026.6.9-py3-none-any.whl", hash = "sha256:442ba4c75724b9496144c8434b617962ee08d0ee7c26ec663848fe9b78d5a3e4", size = 3169035, upload-time = "2026-06-09T23:27:12.58Z" },
 ]

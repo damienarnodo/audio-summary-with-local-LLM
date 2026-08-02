@@ -17,7 +17,7 @@ dependencies = [
     "mlx-audio>=0.2.0",
     "mlx-whisper>=0.4.0",
     "psutil>=6.0.0",
-    "yt-dlp>=2025.3.27",
+    "yt-dlp>=2026.6.9",
     "librosa>=0.11.0",
     "mistral-common>=1.11.3",
 ]
