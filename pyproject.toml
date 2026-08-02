@@ -1,25 +1,31 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "audio-summary-with-local-LLM"
-dynamic = ["version"]
-description = 'Sum up your local or remote files with a local LLM'
-keywords = ["audio", "summary", "local-llm", "ollama", "whisper"]
+version = "0.2.0"
+description = 'Transcribe and summarize audio/video files fully on Apple Silicon via MLX'
+keywords = ["audio", "summary", "local-llm", "mlx", "apple-silicon", "voxtral", "qwen3"]
 readme = "README.md"
 requires-python = ">=3.12, <3.13"
 authors = [
     { name = "darnodo", email = "sepales.pret0h@icloud.com" },
 ]
 dependencies = [
-    "ffmpeg>=1.4",
-    "ollama>=0.4.7",
-    "openai-whisper>=20240930",
-    "torch>=2.6.0",
-    "torchaudio>=2.6.0",
-    "torchvision>=0.21.0",
-    "transformers>=4.50.2",
-    "yt-dlp>=2025.3.27",
+    "mlx-lm>=0.21.0",
+    "mlx-audio>=0.2.0",
+    "mlx-whisper>=0.4.0",
+    "psutil>=6.0.0",
+    "yt-dlp>=2026.6.9",
+    "librosa>=0.11.0",
+    "mistral-common>=1.11.3",
 ]
-[tool.setuptools]
-py-modules = []
+[project.scripts]
+audio-summary = "audio_summary.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
@@ -56,8 +62,8 @@ exclude = [
 line-length = 88
 indent-width = 4
 
-# Assume Python 3.8
-target-version = "py38"
+# Match the project's required Python version.
+target-version = "py312"
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
